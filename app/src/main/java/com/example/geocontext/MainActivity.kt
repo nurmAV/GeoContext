@@ -125,19 +125,20 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                         val latitudeSuffix = if(location.latitude < 0) "S" else "N"
                         val longitudeSuffix = if(location.longitude < 0) "W" else "E"
 
+                        // Update shown location
                         locationResult.text = "${abs(location.latitude)} °$latitudeSuffix, ${abs(location.longitude)} °$longitudeSuffix"
                         altitudeResult.text = "${"%.2f m".format(location.altitude)}"
 
+                        // Altitude difference
                         if(location.altitude > maxAltitude) maxAltitude = location.altitude
                         else if(location.altitude < minAltitude) minAltitude = location.altitude
 
                         currentAltitude = location.altitude
 
                         if(isTracking) {
-
+                            // Compute and update the distance travelled
                             val dist = distance(location, currentLocation)
                             distanceTravelled += dist
-                            Log.i("GeoContext", "Distance travelled updated: $distanceTravelled")
                             distanceTrackingResult.text = "${"%.3f".format(distanceTravelled)} km"
 
                             val currentTime = System.currentTimeMillis()
@@ -145,16 +146,25 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                             velocityResult.text = "${"%.2f".format(dist / timeDelta)} km/h"
                             locationTimestamp = currentTime
 
+                            // Update intermediate times if necessary
                             if( distanceTravelled >= kilometerTimes.size) {
 
                                 kilometerTimes.add(Pair(distanceTravelled, (currentTime - mostRecentTimestamp) / 1000))
                                 timesAdapter.notifyDataSetChanged()
                                 mostRecentTimestamp = currentTime
-                                Log.i("GeoContext", kilometerTimes.toString())
+
                             }
                         }
                         currentLocation = location
 
+                        if(directionTracking) {
+                            var location = Location(currentLocation)
+                            location.longitude = longitudeInput.text.toString().toDouble()
+                            location.latitude = latitudeInput.text.toString().toDouble()
+                            if(currentLocation != null) {
+                            distanceResult.text = "%.2f km".format(currentLocation!!.distanceTo(location) / 1000)
+                            }
+                        }
 
 
 
@@ -331,7 +341,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
         if(!directionTracking)
         {
-            Log.i("GeoContext", "Not tracking direction")
+            //Log.i("GeoContext", "Not tracking direction")
             return
         }
         //Log.i("GeoContext", "Sensor Event")
@@ -353,9 +363,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         SensorManager.getRotationMatrix(rotationMatrix, inclinationMatrix, acceleration, magneticField)
         val bearing = SensorManager.getOrientation(rotationMatrix, orientationAngles)[0]
 
-        Log.i("GeoContext", "North: ${"%.2f".format(orientationAngles[0]* 180 / Math.PI)}, Bearing: ${"%.2f".format(currentLocation?.bearingTo(location) ?: 0.0f)}")
+        //Log.i("GeoContext", "North: ${"%.2f".format(orientationAngles[0]* 180 / Math.PI)}, Bearing: ${"%.2f".format(currentLocation?.bearingTo(location) ?: 0.0f)}")
         val angle = 90.0f + (-bearing ) * 180 / Math.PI + (currentLocation?.bearingTo(location) ?: 0.0f)
-        Log.i("GeoContext", "${"%.2f".format(-bearing * 180 / Math.PI )} + ${"%.2f".format((currentLocation?.bearingTo(location) ?: 0.0f))} = ${"%.2f".format(angle - 90f)}")
+        //Log.i("GeoContext", "${"%.2f".format(-bearing * 180 / Math.PI )} + ${"%.2f".format((currentLocation?.bearingTo(location) ?: 0.0f))} = ${"%.2f".format(angle - 90f)}")
         imageView.rotation = angle.toFloat()
 
 
