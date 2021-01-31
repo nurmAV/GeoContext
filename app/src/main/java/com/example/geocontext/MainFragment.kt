@@ -11,26 +11,31 @@ import android.hardware.SensorManager
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.hardware.SensorManager.SENSOR_DELAY_UI
 import android.location.Location
+import android.media.Image
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
+import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.location.*
-import kotlinx.android.synthetic.main.activity_main.*
 import kotlin.math.*
 
-class MainActivity : AppCompatActivity(), SensorEventListener {
+class MainFragment : Fragment(), SensorEventListener {
 
     // User interface
     lateinit var locationClient: FusedLocationProviderClient
+
+    lateinit var imageView: ImageView
 
     lateinit var locationButton: Button
     lateinit var distanceButton: Button
@@ -80,27 +85,27 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
 
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         /* UI elements */
-        locationButton = findViewById(R.id.location_button)
-        distanceButton = findViewById(R.id.distance_button)
+        val view = inflater.inflate(R.layout.fragment_main, container, false)
+        imageView = view.findViewById(R.id.imageView)!!
+        locationButton = view.findViewById(R.id.location_button)!!
+        distanceButton = view.findViewById(R.id.distance_button)!!
 
-        locationResult = findViewById(R.id.location_result)
-        distanceResult = findViewById(R.id.distance_result)
-        altitudeResult = findViewById(R.id.altitude)
+        locationResult = view.findViewById(R.id.location_result)
+        distanceResult = view.findViewById(R.id.distance_result)
+        altitudeResult = view.findViewById(R.id.altitude)
 
-        latitudeInput = findViewById(R.id.latitude_input)
-        longitudeInput = findViewById(R.id.longitude_input)
-        useCurrentLocation = findViewById(R.id.this_location)
+        latitudeInput = view.findViewById(R.id.latitude_input)
+        longitudeInput = view.findViewById(R.id.longitude_input)
+        useCurrentLocation = view.findViewById(R.id.this_location)
 
-        distanceTrackingButton = findViewById(R.id.distance_tracking)
-        distanceTrackingResult = findViewById(R.id.distance_tracking_result)
+        distanceTrackingButton = view.findViewById(R.id.distance_tracking)
+        distanceTrackingResult = view.findViewById(R.id.distance_tracking_result)
         distanceTrackingResult.text = "0 km"
 
-        velocityResult = findViewById(R.id.velocity)
+        velocityResult = view.findViewById(R.id.velocity)
 
 
         /* Check if previous location info was found */
@@ -110,7 +115,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
 
         /* Location  service client*/
-        locationClient = LocationServices.getFusedLocationProviderClient(this)
+        locationClient = LocationServices.getFusedLocationProviderClient(activity as Context)
 
 
 
@@ -192,9 +197,9 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
                 kilometerTimes = mutableListOf()
                 timesAdapter.notifyDataSetChanged()
-                val view = LayoutInflater.from(this).inflate(R.layout.times_layout, null, false)
+                val view = LayoutInflater.from(context).inflate(R.layout.times_layout, null, false)
                 val recycler = view.findViewById<RecyclerView>(R.id.times_list)
-                recycler.layoutManager = LinearLayoutManager(this)
+                recycler.layoutManager = LinearLayoutManager(context)
                 recycler.adapter = timesAdapter
                 view.findViewById<TextView>(R.id.max_altitude_difference).text = (maxAltitude - minAltitude).toString() + " m"
                 view.findViewById<TextView>(R.id.net_altitude_diffence).text = (currentAltitude - initialAltitude).toString() + " m"
@@ -202,7 +207,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
 
 
                 Log.i("GeoContext", "Times:" + timesAdapter.data.toString())
-                AlertDialog.Builder(this).setTitle("Kilometer times").setView(view).show()
+                AlertDialog.Builder(activity as Context).setTitle("Kilometer times").setView(view).show()
                 distanceTrackingButton.setBackgroundColor(Color.rgb(0x00, 0x77, 0x00))
                 distanceTrackingButton.text = "Start tracking"
                 distanceTravelled = 0.0
@@ -230,10 +235,10 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         }}
         locationButton.setOnClickListener { run{
             if (ActivityCompat.checkSelfPermission(
-                    this,
+                    activity as Context,
                     Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    this,
+                    activity as Context,
                     Manifest.permission.ACCESS_COARSE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED
             ) {
@@ -292,8 +297,8 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
                 }
             }
         }
-
-
+            //return super.onCreateView(inflater, container, savedInstanceState)
+            return view
     }
 
     fun haversine(alpha: Double): Double {
@@ -384,7 +389,7 @@ class MainActivity : AppCompatActivity(), SensorEventListener {
         distanceTrackingResult.text = "${"%.3f".format(distanceTravelled)} km"
 
         /* Register sensors */
-        manager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        manager = activity?.getSystemService(Context.SENSOR_SERVICE) as SensorManager
         magnetometer = manager?.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD)
         accelerometer = manager?.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
