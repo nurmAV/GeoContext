@@ -28,6 +28,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.location.*
+import kotlinx.android.synthetic.main.fragment_settings.*
 import kotlin.math.*
 
 class MainFragment : Fragment(), SensorEventListener {
@@ -112,6 +113,7 @@ class MainFragment : Fragment(), SensorEventListener {
         if(savedInstanceState?.keySet()?.contains("location") == true) locationResult.text = savedInstanceState?.getString("location")
         if(savedInstanceState?.keySet()?.contains("altitude") == true) altitudeResult.text = savedInstanceState?.getDouble("altitude").toString() + " m"
         if(savedInstanceState?.keySet()?.contains("distanceTravelled") == true) distanceTrackingResult.text = savedInstanceState?.getString("distanceTravelled")
+
 
 
         /* Location  service client*/
@@ -214,6 +216,7 @@ class MainFragment : Fragment(), SensorEventListener {
                 initialTimestamp = 0
             }
             else {
+                //Log.i("GeoContext", "Fast interval: ")
                 distanceTrackingButton.text = "Stop tracking"
 
                 // Intermediate times
@@ -249,7 +252,11 @@ class MainFragment : Fragment(), SensorEventListener {
                         Manifest.permission.ACCESS_COARSE_LOCATION)
                         .toTypedArray(), 0)
             }
-            locationClient.requestLocationUpdates(LocationRequest.create().setInterval(5 *1000).setFastestInterval(5*1000).setPriority(
+            val preferences = activity?.getSharedPreferences("settings", Context.MODE_PRIVATE)
+            val maxInterval = preferences!!.getInt("max_interval", 5000)
+            val fastestInterval = preferences!!.getInt("fast_interval", 1000)
+            Log.i("GeoContext", "Max interval: $maxInterval, Fast interval: $fastestInterval")
+            locationClient.requestLocationUpdates(LocationRequest.create().setInterval(maxInterval.toLong()).setFastestInterval(fastestInterval.toLong()).setPriority(
                 LocationRequest.PRIORITY_HIGH_ACCURACY), locationCallback, Looper.getMainLooper())
             locationClient.lastLocation.addOnSuccessListener {
                     location: Location? ->
