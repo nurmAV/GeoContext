@@ -1,7 +1,8 @@
-package com.example.geocontext
+    package com.example.geocontext
 
 import android.Manifest
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
 import android.hardware.Sensor
@@ -31,7 +32,7 @@ import com.google.android.gms.location.*
 import kotlinx.android.synthetic.main.fragment_settings.*
 import kotlin.math.*
 
-class MainFragment : Fragment(), SensorEventListener {
+class MainFragment : Fragment(), SensorEventListener, Updatable {
 
     // User interface
     lateinit var locationClient: FusedLocationProviderClient
@@ -85,7 +86,22 @@ class MainFragment : Fragment(), SensorEventListener {
     var currentAltitude = 0.0
 
 
+    // Distance unit conversions
+    var unitConversions = mapOf("kilometer" to 1.0, "mile" to 1/1.609, "nautical mile" to 1/1.852)
+    var unitAbbreviations = mapOf("kilometer" to "km", "mile" to "mi", "nautical mile" to "nm")
+    var distanceUnit: String? = "kilometer"
 
+    // Settings
+    lateinit var preferences: SharedPreferences
+    var fastestInterval: Long = 1
+    var maxInterval: Long = 5
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        preferences = activity!!.getSharedPreferences("settings", Context.MODE_PRIVATE)
+        distanceUnit = preferences?.getString("distance_unit", "kilometer")
+    }
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         /* UI elements */
@@ -104,7 +120,7 @@ class MainFragment : Fragment(), SensorEventListener {
 
         distanceTrackingButton = view.findViewById(R.id.distance_tracking)
         distanceTrackingResult = view.findViewById(R.id.distance_tracking_result)
-        distanceTrackingResult.text = "0 km"
+        distanceTrackingResult.text = "0 $distanceUnit"
 
         velocityResult = view.findViewById(R.id.velocity)
 
@@ -118,6 +134,8 @@ class MainFragment : Fragment(), SensorEventListener {
 
         /* Location  service client*/
         locationClient = LocationServices.getFusedLocationProviderClient(activity as Context)
+
+
 
 
 
@@ -146,7 +164,9 @@ class MainFragment : Fragment(), SensorEventListener {
                             // Compute and update the distance travelled
                             val dist = distance(location, currentLocation)
                             distanceTravelled += dist
-                            distanceTrackingResult.text = "${"%.3f".format(distanceTravelled)} km"
+                            Log.i("GeoContext", if(distanceUnit!= null) distanceUnit else "null")
+                            distanceTrackingResult.text = "${"%.3f".format(distanceTravelled * unitConversions[distanceUnit!!]!!) } ${unitAbbreviations[distanceUnit!!]}"
+
 
                             val currentTime = System.currentTimeMillis()
                             val timeDelta = (currentTime - locationTimestamp) / (3600 * 1000.0)
@@ -169,7 +189,8 @@ class MainFragment : Fragment(), SensorEventListener {
                             location.longitude = longitudeInput.text.toString().toDouble()
                             location.latitude = latitudeInput.text.toString().toDouble()
                             if(currentLocation != null) {
-                            distanceResult.text = "%.2f km".format(currentLocation!!.distanceTo(location) / 1000)
+                            distanceResult.text = "%.2f ${unitAbbreviations[distanceUnit!!]}"
+                                    .format((currentLocation!!.distanceTo(location) / 1000) * unitConversions[distanceUnit!!]!!)
                             }
                         }
 
@@ -216,7 +237,6 @@ class MainFragment : Fragment(), SensorEventListener {
                 initialTimestamp = 0
             }
             else {
-                //Log.i("GeoContext", "Fast interval: ")
                 distanceTrackingButton.text = "Stop tracking"
 
                 // Intermediate times
@@ -253,8 +273,8 @@ class MainFragment : Fragment(), SensorEventListener {
                         .toTypedArray(), 0)
             }
             val preferences = activity?.getSharedPreferences("settings", Context.MODE_PRIVATE)
-            val maxInterval = preferences!!.getInt("max_interval", 5000)
-            val fastestInterval = preferences!!.getInt("fast_interval", 1000)
+            maxInterval = preferences!!.getInt("max_interval", 5000).toLong()
+            fastestInterval = preferences!!.getInt("fast_interval", 1000).toLong()
             Log.i("GeoContext", "Max interval: $maxInterval, Fast interval: $fastestInterval")
             locationClient.requestLocationUpdates(LocationRequest.create().setInterval(maxInterval.toLong()).setFastestInterval(fastestInterval.toLong()).setPriority(
                 LocationRequest.PRIORITY_HIGH_ACCURACY), locationCallback, Looper.getMainLooper())
@@ -413,6 +433,16 @@ class MainFragment : Fragment(), SensorEventListener {
         outState.putString("location", locationResult.text.toString())
         //Log.i("GeoContext", "onSaveInstanceState")
         outState.putDouble("altitude", currentAltitude)
+    }
+
+    override fun update() {
+        distanceUnit = preferences?.getString("distance_unit", "kilometer")
+        fastestInterval = preferences?.getInt("fast_interval", 1000)!!.toLong()
+        maxInterval = preferences?.getInt("max_interval", 5000)!!.toLong()
+
+
+
+
     }
 
 }

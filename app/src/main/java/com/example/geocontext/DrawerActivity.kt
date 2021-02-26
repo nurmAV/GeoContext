@@ -24,6 +24,9 @@ class DrawerActivity : FragmentActivity() {
         if(!preferences.contains("fast_interval") || !preferences.contains("max_interval")) {
             preferences.edit().putInt("fast_interval", 1000).putInt("max_interval", 5000)
         }
+        if(!preferences.contains("distance_unit")) {
+            preferences.edit().putString("distance_unit", "kilometer")
+        }
 
         val settingsFragment = SettingsFragment()
         val mainFragment = MainFragment()
