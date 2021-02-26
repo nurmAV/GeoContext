@@ -33,8 +33,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         maxIntervalInput = view!!.findViewById(R.id.max_interval)
 
         var selectedDistanceUnit = preferences?.getString("distance_unit", "kilometer")
-        val fastInterval = preferences?.getInt("fast_interval", 5).toString()
-        val maxInterval = preferences?.getInt("max_interval", 5).toString()
+        val fastInterval = preferences?.getInt("fast_interval", 5000)?.div(1000.0)
+        val maxInterval = preferences?.getInt("max_interval", 5000)?.div(1000.0)
 
 
         val spinnerAdapater = ArrayAdapter.createFromResource(activity!!, R.array.distance_units_array, R.layout.support_simple_spinner_dropdown_item)
@@ -53,8 +53,8 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         }
         distanceUnitsSpinner.setSelection( spinnerAdapater.getPosition(selectedDistanceUnit))
 
-        fastestIntervalInput.setText(fastInterval)
-        maxIntervalInput.setText(maxInterval)
+        fastestIntervalInput.setText("%.2f".format(fastInterval))
+        maxIntervalInput.setText("%.2f".format(maxInterval))
 
         // Save button and event listener
         saveButton = view!!.findViewById(R.id.save_settings)
@@ -67,8 +67,9 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                 else -> "kilometer"
             }
             preferences?.edit()
-                    ?.putInt("fast_interval", fastestIntervalInput.text.toString().toInt() * 1000)
-                    ?.putInt("max_interval", max_interval.text.toString().toInt() * 1000)
+                    ?.putInt("fast_interval", (fastestIntervalInput.text.toString().toDouble() * 1000).toInt())
+                    ?.putInt("max_interval", (max_interval.text.toString().toDouble() * 1000).toInt())
+
                     ?.putString("distance_unit", distanceUnit)
                     ?.apply()
             Toast.makeText(context, "Saved settings", Toast.LENGTH_SHORT).show()

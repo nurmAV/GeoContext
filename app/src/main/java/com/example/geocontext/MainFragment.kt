@@ -120,7 +120,7 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
 
         distanceTrackingButton = view.findViewById(R.id.distance_tracking)
         distanceTrackingResult = view.findViewById(R.id.distance_tracking_result)
-        distanceTrackingResult.text = "0 $distanceUnit"
+        distanceTrackingResult.text = "0 ${unitAbbreviations[distanceUnit]}"
 
         velocityResult = view.findViewById(R.id.velocity)
 
