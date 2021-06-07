@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.fragment.app.FragmentActivity
 import kotlinx.android.synthetic.main.activity_drawer.*
+import java.io.File
 
 lateinit var toggle: ActionBarDrawerToggle
 
@@ -43,6 +44,12 @@ class DrawerActivity : FragmentActivity() {
             true
         }
 
+        val file = File(applicationContext.filesDir, "saved_locations")
+
+        if(!file.exists()) {
+            file.createNewFile()
+
+        }
 
     }
 }

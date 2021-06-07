@@ -9,6 +9,8 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.fragment_settings.*
 
 
@@ -18,6 +20,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     lateinit var fastestIntervalInput: EditText
     lateinit var maxIntervalInput: EditText
     lateinit var distanceUnitsSpinner: Spinner
+    lateinit var savedLocationRecycler: RecyclerView
 
 
 
@@ -31,6 +34,10 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         distanceUnitsSpinner = view!!.findViewById(R.id.distance_units)
         fastestIntervalInput = view!!.findViewById(R.id.fast_interval)
         maxIntervalInput = view!!.findViewById(R.id.max_interval)
+        savedLocationRecycler = view!!.findViewById(R.id.saved_location_recycler)
+        savedLocationRecycler.layoutManager = LinearLayoutManager(context)
+        //val data = mutableListOf(Triple("Home", 60.2486 ,24.7634))
+        //savedLocationRecycler.adapter = LocationAdapter(data)
 
         var selectedDistanceUnit = preferences?.getString("distance_unit", "kilometer")
         val fastInterval = preferences?.getInt("fast_interval", 5000)?.div(1000.0)

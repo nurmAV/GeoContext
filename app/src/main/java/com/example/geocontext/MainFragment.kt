@@ -1,7 +1,8 @@
-    package com.example.geocontext
+package com.example.geocontext
 
 import android.Manifest
 import android.content.Context
+import android.content.DialogInterface
 import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.graphics.Color
@@ -12,24 +13,20 @@ import android.hardware.SensorManager
 import android.hardware.SensorManager.SENSOR_DELAY_NORMAL
 import android.hardware.SensorManager.SENSOR_DELAY_UI
 import android.location.Location
-import android.media.Image
 import android.os.Bundle
 import android.os.Looper
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
-import android.widget.TextView
+import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.gms.location.*
-import kotlinx.android.synthetic.main.fragment_settings.*
+import java.io.File
 import kotlin.math.*
 
 class MainFragment : Fragment(), SensorEventListener, Updatable {
@@ -40,6 +37,7 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
     lateinit var imageView: ImageView
 
     lateinit var locationButton: Button
+    lateinit var saveLocationButton: Button
     lateinit var distanceButton: Button
     lateinit var useCurrentLocation: Button
 
@@ -95,13 +93,28 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
     lateinit var preferences: SharedPreferences
     var fastestInterval: Long = 1
     var maxInterval: Long = 5
+    var savedLocations = mutableListOf<com.example.geocontext.Location>()
+    lateinit var savedLocationsFile: File
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         preferences = activity!!.getSharedPreferences("settings", Context.MODE_PRIVATE)
         distanceUnit = preferences?.getString("distance_unit", "kilometer")
+
+        //context.
+        val savedLocationsFile = File(activity!!.applicationContext.filesDir, "saved_locations")
+        savedLocationsFile.readLines().forEach { line ->
+            val parts = line.split("|")
+            val name = parts[0]
+            val latitude =parts[1].trim().toDouble()
+            val longitude = parts[2].trim().toDouble()
+            savedLocations.add(Location(name, latitude, longitude))
+
+        }
+        Log.i("GeoContext", "Saved locations ${ savedLocations.toString()}")
     }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         /* UI elements */
@@ -109,6 +122,7 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
         imageView = view.findViewById(R.id.imageView)!!
         locationButton = view.findViewById(R.id.location_button)!!
         distanceButton = view.findViewById(R.id.distance_button)!!
+        saveLocationButton = view.findViewById(R.id.save_location_button) !!
 
         locationResult = view.findViewById(R.id.location_result)
         distanceResult = view.findViewById(R.id.distance_result)
@@ -211,6 +225,36 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
                 longitudeInput.setText(currentLocation?.longitude.toString())
             }
         }
+
+        saveLocationButton.setOnClickListener { run {
+            val builder = AlertDialog.Builder(context!!)
+
+            val view = LayoutInflater.from(context).inflate(R.layout.save_location_input, null, false)
+            val nameInput = view.findViewById<EditText>(R.id.location_name_input)
+            val latitudeInput = view.findViewById<EditText>(R.id.save_location_latitude_input)
+            val longitudeInput = view.findViewById<EditText>(R.id.save_location_longitude_input)
+
+            latitudeInput.apply{
+                setText("%.5f".format(currentLocation?.latitude))
+                isEnabled = false
+            }
+                longitudeInput.apply{
+                    setText("%.5f".format(currentLocation?.longitude))
+                    isEnabled = false
+                }
+
+            builder.setPositiveButton("Save", DialogInterface.OnClickListener { _, i ->
+
+                savedLocations.add(Location(nameInput.text.toString(), currentLocation!!.latitude, currentLocation!!.longitude))
+                Toast.makeText(context, "Saved new location \" ${nameInput.text.toString()}\"", Toast.LENGTH_SHORT).show()
+                }
+            )
+
+            builder.setView(view).create().show()
+
+
+            }
+        } 
 
         distanceTrackingButton.setOnClickListener { run{
             if(isTracking) {
@@ -406,6 +450,7 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
 
     override fun onPause() {
         super.onPause()
+        saveLocations()
         Log.i("GeoContext", "onPause")
         manager?.unregisterListener(this)
     }
@@ -425,6 +470,22 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
 
 
     }
+    fun saveLocations() {
+        val locsAsStrings = savedLocations.map { "${it.name}|${it.latitude}|${it.longitude}" }
+        val fileContents = locsAsStrings.joinToString(separator="\n")
+        Log.i("GeoContext", "Locations to save ${fileContents}")
+        val stream = context!!.openFileOutput("saved_locations", Context.MODE_PRIVATE)
+        stream.write(fileContents.toByteArray())
+        stream.close()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        saveLocations()
+    }
+
+
+
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
@@ -444,5 +505,7 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
 
 
     }
+
+
 
 }
