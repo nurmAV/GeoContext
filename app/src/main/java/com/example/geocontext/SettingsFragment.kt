@@ -1,9 +1,7 @@
 package com.example.geocontext
 
 import android.content.Context
-import android.content.SharedPreferences
 import android.os.Bundle
-import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
@@ -12,6 +10,7 @@ import android.widget.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.fragment_settings.*
+import java.io.File
 
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
@@ -20,7 +19,7 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     lateinit var fastestIntervalInput: EditText
     lateinit var maxIntervalInput: EditText
     lateinit var distanceUnitsSpinner: Spinner
-    lateinit var savedLocationRecycler: RecyclerView
+    lateinit var savedLocationsRecycler: RecyclerView
 
 
 
@@ -34,10 +33,20 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         distanceUnitsSpinner = view!!.findViewById(R.id.distance_units)
         fastestIntervalInput = view!!.findViewById(R.id.fast_interval)
         maxIntervalInput = view!!.findViewById(R.id.max_interval)
-        savedLocationRecycler = view!!.findViewById(R.id.saved_location_recycler)
-        savedLocationRecycler.layoutManager = LinearLayoutManager(context)
-        //val data = mutableListOf(Triple("Home", 60.2486 ,24.7634))
-        //savedLocationRecycler.adapter = LocationAdapter(data)
+        savedLocationsRecycler = view!!.findViewById(R.id.saved_locations_recycler)
+        savedLocationsRecycler.layoutManager = LinearLayoutManager(context)
+        //val data = mutableListOf(Location("Home", 60.2486 ,24.7634))
+        val data = mutableListOf<Location>()
+        val savedLocationsFile = File(activity!!.applicationContext.filesDir, "saved_locations")
+        savedLocationsFile.readLines().forEach { line ->
+            val parts = line.split("|")
+            val name = parts[0]
+            val latitude = parts[1].trim().toDouble()
+            val longitude = parts[2].trim().toDouble()
+            data.add(Location(name, latitude, longitude))
+        }
+
+        savedLocationsRecycler.adapter = LocationAdapter(data)
 
         var selectedDistanceUnit = preferences?.getString("distance_unit", "kilometer")
         val fastInterval = preferences?.getInt("fast_interval", 5000)?.div(1000.0)
