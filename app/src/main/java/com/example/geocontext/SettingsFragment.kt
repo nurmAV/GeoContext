@@ -15,14 +15,16 @@ import java.io.File
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
 
+
+    // UI elements
     lateinit var saveButton: Button
     lateinit var fastestIntervalInput: EditText
     lateinit var maxIntervalInput: EditText
     lateinit var distanceUnitsSpinner: Spinner
     lateinit var savedLocationsRecycler: RecyclerView
 
-
-
+    // Saved locations
+    lateinit var savedLocations: List<Location>
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         // Shared preferences for persisting settings
@@ -36,17 +38,20 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         savedLocationsRecycler = view!!.findViewById(R.id.saved_locations_recycler)
         savedLocationsRecycler.layoutManager = LinearLayoutManager(context)
         //val data = mutableListOf(Location("Home", 60.2486 ,24.7634))
-        val data = mutableListOf<Location>()
+        //savedLocations = mutableListOf<Location>()
+
+        savedLocations = SavedLocationsManager.getSavedLocations()
+        /*
         val savedLocationsFile = File(activity!!.applicationContext.filesDir, "saved_locations")
         savedLocationsFile.readLines().forEach { line ->
             val parts = line.split("|")
             val name = parts[0]
             val latitude = parts[1].trim().toDouble()
             val longitude = parts[2].trim().toDouble()
-            data.add(Location(name, latitude, longitude))
+            savedLocations.add(Location(name, latitude, longitude))
         }
-
-        savedLocationsRecycler.adapter = LocationAdapter(data)
+       */
+        savedLocationsRecycler.adapter = LocationAdapter(savedLocations)
 
         var selectedDistanceUnit = preferences?.getString("distance_unit", "kilometer")
         val fastInterval = preferences?.getInt("fast_interval", 5000)?.div(1000.0)
@@ -98,6 +103,16 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         return view
 
     }
+
+    override fun onResume() {
+        super.onResume()
+        SavedLocationsManager.loadSavedLocations(context!!)
+        savedLocations = SavedLocationsManager.getSavedLocations()
+        savedLocationsRecycler.adapter!!.notifyDataSetChanged()
+
+
+    }
+
 
 
 

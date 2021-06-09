@@ -11,20 +11,23 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:hint="Location name" />
-
-    <TextView
-        android:id="@+id/location_longitude"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:hint="Latitude" />
+        android:hint="Location name"
+        android:textSize="16sp" />
 
     <TextView
         android:id="@+id/location_latitude"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_weight="1"
-        android:hint="Longitude" />
+        android:hint="Longitude"
+        android:textSize="16sp" />
+
+    <TextView
+        android:id="@+id/location_longitude"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:hint="Latitude"
+        android:textSize="16sp" />
 
 </LinearLayout>

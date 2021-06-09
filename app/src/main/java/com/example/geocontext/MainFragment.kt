@@ -93,8 +93,6 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
     lateinit var preferences: SharedPreferences
     var fastestInterval: Long = 1
     var maxInterval: Long = 5
-    var savedLocations = mutableListOf<com.example.geocontext.Location>()
-    lateinit var savedLocationsFile: File
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -102,17 +100,7 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
         preferences = activity!!.getSharedPreferences("settings", Context.MODE_PRIVATE)
         distanceUnit = preferences?.getString("distance_unit", "kilometer")
 
-        //context.
-        val savedLocationsFile = File(activity!!.applicationContext.filesDir, "saved_locations")
-        savedLocationsFile.readLines().forEach { line ->
-            val parts = line.split("|")
-            val name = parts[0]
-            val latitude =parts[1].trim().toDouble()
-            val longitude = parts[2].trim().toDouble()
-            savedLocations.add(Location(name, latitude, longitude))
 
-        }
-        Log.i("GeoContext", "Saved locations ${ savedLocations.toString()}")
     }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
@@ -245,7 +233,11 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
 
             builder.setPositiveButton("Save", DialogInterface.OnClickListener { _, i ->
 
-                savedLocations.add(Location(nameInput.text.toString(), currentLocation!!.latitude, currentLocation!!.longitude))
+               //savedLocations.add(Location(nameInput.text.toString(), currentLocation!!.latitude, currentLocation!!.longitude))
+                val name = nameInput.text.toString()
+                val latitude = latitudeInput.text.toString().toDouble()
+                val longitude = longitudeInput.text.toString().toDouble()
+                SavedLocationsManager.addLocation(Location(name, latitude, longitude), context!!)
                 Toast.makeText(context, "Saved new location \" ${nameInput.text.toString()}\"", Toast.LENGTH_SHORT).show()
                 }
             )
@@ -450,7 +442,7 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
 
     override fun onPause() {
         super.onPause()
-        saveLocations()
+        SavedLocationsManager.saveLocations(context!!)
         Log.i("GeoContext", "onPause")
         manager?.unregisterListener(this)
     }
@@ -470,18 +462,11 @@ class MainFragment : Fragment(), SensorEventListener, Updatable {
 
 
     }
-    fun saveLocations() {
-        val locsAsStrings = savedLocations.map { "${it.name}|${it.latitude}|${it.longitude}" }
-        val fileContents = locsAsStrings.joinToString(separator="\n")
-        Log.i("GeoContext", "Locations to save ${fileContents}")
-        val stream = context!!.openFileOutput("saved_locations", Context.MODE_PRIVATE)
-        stream.write(fileContents.toByteArray())
-        stream.close()
-    }
+
 
     override fun onDestroy() {
         super.onDestroy()
-        saveLocations()
+        SavedLocationsManager.saveLocations(context!!)
     }
 
 
