@@ -1,6 +1,8 @@
 package com.example.geocontext
 
+import android.app.AlertDialog
 import android.content.Context
+import android.content.DialogInterface
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
@@ -10,7 +12,7 @@ import android.widget.*
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import kotlinx.android.synthetic.main.fragment_settings.*
-import java.io.File
+import kotlin.NumberFormatException
 
 
 class SettingsFragment : Fragment(R.layout.fragment_settings) {
@@ -22,9 +24,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
     lateinit var maxIntervalInput: EditText
     lateinit var distanceUnitsSpinner: Spinner
     lateinit var savedLocationsRecycler: RecyclerView
+    lateinit var addLocationButton: Button
 
     // Saved locations
     lateinit var savedLocations: List<Location>
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
 
         // Shared preferences for persisting settings
@@ -37,20 +41,11 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
         maxIntervalInput = view!!.findViewById(R.id.max_interval)
         savedLocationsRecycler = view!!.findViewById(R.id.saved_locations_recycler)
         savedLocationsRecycler.layoutManager = LinearLayoutManager(context)
+        addLocationButton = view.findViewById(R.id.add_location_button)
         //val data = mutableListOf(Location("Home", 60.2486 ,24.7634))
         //savedLocations = mutableListOf<Location>()
 
         savedLocations = SavedLocationsManager.getSavedLocations()
-        /*
-        val savedLocationsFile = File(activity!!.applicationContext.filesDir, "saved_locations")
-        savedLocationsFile.readLines().forEach { line ->
-            val parts = line.split("|")
-            val name = parts[0]
-            val latitude = parts[1].trim().toDouble()
-            val longitude = parts[2].trim().toDouble()
-            savedLocations.add(Location(name, latitude, longitude))
-        }
-       */
         savedLocationsRecycler.adapter = LocationAdapter(savedLocations)
 
         var selectedDistanceUnit = preferences?.getString("distance_unit", "kilometer")
@@ -94,6 +89,45 @@ class SettingsFragment : Fragment(R.layout.fragment_settings) {
                     ?.putString("distance_unit", distanceUnit)
                     ?.apply()
             Toast.makeText(context, "Saved settings", Toast.LENGTH_SHORT).show()
+
+        }
+
+        addLocationButton.setOnClickListener {
+            val view = LayoutInflater.from(activity as Context).inflate(R.layout.save_location_input, null, false)
+            val nameInput = view.findViewById<EditText>(R.id.location_name_input)
+            val latitudeInput = view.findViewById<EditText>(R.id.save_location_latitude_input)
+            val longitudeInput = view.findViewById<EditText>(R.id.save_location_longitude_input)
+
+            val builder = AlertDialog.Builder(activity as Context)
+
+            builder.setPositiveButton("Add location", DialogInterface.OnClickListener { _,i ->
+                try {
+                    val name = nameInput.text.toString()
+                    val latitude = latitudeInput.text.toString().toDouble()
+                    val longitude = longitudeInput.text.toString().toDouble()
+                    if(latitude >= -90 && latitude <= 90
+                        && longitude >= -180 && longitude <= 180
+                        && name != "") {
+
+
+                        SavedLocationsManager.addLocation(
+                            Location(name, latitude, longitude),
+                            context!!
+                        )
+                        Toast.makeText(
+                            context,
+                            "Added a new location \"$name\"",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        savedLocationsRecycler.adapter?.notifyDataSetChanged()
+                    }else {
+                        Toast.makeText(context, "Invalid latitude and/or longitude", Toast.LENGTH_SHORT).show()
+                    }
+                }catch (e: NumberFormatException) {
+                    Toast.makeText(context, "Invalid latitude and/or longitude", Toast.LENGTH_SHORT ).show()
+                }
+            })
+            builder.setTitle("Add a new location").setView(view).create().show()
 
         }
 

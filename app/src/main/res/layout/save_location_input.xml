@@ -20,7 +20,8 @@
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:ems="10"
-        android:inputType="numberDecimal" />
+        android:hint="Latitude"
+        android:inputType="numberSigned|numberDecimal" />
 
     <EditText
         android:id="@+id/save_location_longitude_input"
@@ -28,5 +29,6 @@
         android:layout_height="wrap_content"
         android:layout_margin="5dp"
         android:ems="10"
-        android:inputType="numberDecimal" />
+        android:hint="Longitude"
+        android:inputType="numberSigned|numberDecimal" />
 </LinearLayout>
